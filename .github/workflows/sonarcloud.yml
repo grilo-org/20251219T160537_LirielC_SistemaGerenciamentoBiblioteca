@@ -1,0 +1,53 @@
+
+name: Grilo SC Analysis for Java (Maven)
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch: {}
+
+jobs:
+  sonar-analysis:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # PASSO ATUALIZADO: Detector de Versão Universal e Robusto
+      - name: Detect Java version
+        id: detect_java
+        run: |
+          # Encontra o pom.xml principal (não dentro de uma pasta 'target')
+          POM_PATH=$(find . -maxdepth 2 -type f -name "pom.xml" ! -path "*/target/*" | head -n 1)
+          if [ -z "$POM_PATH" ]; then
+            echo "pom.xml não encontrado. Usando Java 17 como padrão."
+            JAVA_VERSION='17'
+          else
+            echo "Analisando pom.xml em: $POM_PATH"
+            # Extrai a versão e limpa a saída, com fallback para 17
+            JAVA_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${maven.compiler.release}' --non-recursive exec:exec -f "$POM_PATH" | grep -o '^[0-9][0-9]*' || echo '17')
+          fi
+          echo "Versão de Java detectada/definida: $JAVA_VERSION"
+          echo "java_version=$JAVA_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ steps.detect_java.outputs.java_version }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and analyze with Maven
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          mvn -B verify sonar:sonar -DskipTests
+          -Dsonar.projectKey=grilo-org_20251219T160537_LirielC_SistemaGerenciamentoBiblioteca
+          -Dsonar.projectName=20251219T160537_LirielC_SistemaGerenciamentoBiblioteca
+          -Dsonar.host.url=https://sonarcloud.io 
+          -Dsonar.organization=grilo-org
