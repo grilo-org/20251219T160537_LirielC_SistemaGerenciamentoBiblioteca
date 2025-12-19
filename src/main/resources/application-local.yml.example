@@ -1,0 +1,17 @@
+# ========== EXEMPLO DE CONFIGURAÇÃO LOCAL ==========
+# Copie este arquivo para 'application-local.yml' e configure suas chaves reais
+# O arquivo 'application-local.yml' não será commitado por estar no .gitignore
+
+stripe:
+  secret-key: sk_test_SUA_CHAVE_SECRETA_AQUI
+  public-key: pk_test_SUA_CHAVE_PUBLICA_AQUI
+  webhook-secret: whsec_SEU_WEBHOOK_SECRET_AQUI
+
+# Configurações locais opcionais
+spring:
+  datasource:
+    password: SUA_SENHA_MYSQL_AQUI
+    
+logging:
+  level:
+    com.biblioteca: DEBUG  # Para mais logs durante desenvolvimento 
